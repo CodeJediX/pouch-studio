@@ -18,7 +18,7 @@ const views={default:{p:[.31,.14,.70],t:[0,0,0],label:'Three-quarter view'},fron
 function size(){const w=host.clientWidth,h=host.clientHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();}
 function setView(key){const v=views[key],scale=key==='detail'?1:Math.max(1,.9/camera.aspect);camera.position.set(...v.p).multiplyScalar(scale);controls.target.set(...v.t);controls.update();document.querySelector('#view-label').textContent=v.label;document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===key));}
 new ResizeObserver(size).observe(host);size();setView('default');
-new GLTFLoader().load('./Laptop_Pouch.glb?v=2',g=>{scene.add(g.scene);g.scene.traverse(o=>{if(o.isMesh){o.material.envMapIntensity=.25;}});loading.hidden=true;},undefined,()=>{loading.textContent='The model could not load. Please refresh the page.';});
+new GLTFLoader().load('./Laptop_Pouch.glb?v=3',g=>{scene.add(g.scene);g.scene.traverse(o=>{if(o.isMesh){o.material.envMapIntensity=.25;}});loading.hidden=true;},undefined,()=>{loading.textContent='The model could not load. Please refresh the page.';});
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{stop();setView(b.dataset.view)});
 const rotate=document.querySelector('#rotate');function stop(){controls.autoRotate=false;rotate.setAttribute('aria-pressed','false');rotate.firstElementChild.textContent='Start 360° rotation';}
 rotate.onclick=()=>{controls.autoRotate=!controls.autoRotate;rotate.setAttribute('aria-pressed',String(controls.autoRotate));rotate.firstElementChild.textContent=controls.autoRotate?'Pause rotation':'Start 360° rotation';};

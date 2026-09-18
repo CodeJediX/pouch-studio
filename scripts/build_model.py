@@ -28,11 +28,12 @@ colors = [(0,184,235),(255,133,14),(15,28,150)]
 
 def panel_texture(front):
     arr = cloth.copy()
-    # One inch TOTAL, split equally into cyan / orange / royal blue.
-    start = round((16-.7-1)*PPIN)
-    for k,color in enumerate(colors):
-        left,right = start+round(k*PPIN/3),start+round((k+1)*PPIN/3)
-        arr[:,left:right] = np.clip(np.array(color)[None,None,:]*(.95+(base[:,left:right,None].astype(float)-30)/190),0,255)
+    if front:
+        # One inch TOTAL, split equally into cyan / orange / royal blue.
+        start = round((16-.7-1)*PPIN)
+        for k,color in enumerate(colors):
+            left,right = start+round(k*PPIN/3),start+round((k+1)*PPIN/3)
+            arr[:,left:right] = np.clip(np.array(color)[None,None,:]*(.95+(base[:,left:right,None].astype(float)-30)/190),0,255)
     im = Image.fromarray(arr)
     if front:
         # Extract only the supplied crest, excluding red measurement annotations.
@@ -83,7 +84,7 @@ def texture(im):
     j['textures'].append({'source':len(j['images'])-1,'sampler':0})
     return len(j['textures'])-1
 front_tex,back_tex,norm_tex = texture(panel_texture(True)),texture(panel_texture(False)),texture(normal_image)
-for name,tex in [('Front woven artwork',front_tex),('Back woven tricolor',back_tex)]:
+for name,tex in [('Front woven artwork',front_tex),('Back woven black fabric',back_tex)]:
     j['materials'].append({'name':name,'pbrMetallicRoughness':{'baseColorTexture':{'index':tex},'metallicFactor':0,'roughnessFactor':.86},'normalTexture':{'index':norm_tex,'scale':.65}})
 for name,color,rough,metal in [('Black textile',[.012,.014,.018,1],.9,0),('Bound black edges',[.008,.009,.012,1],.85,0),('Graphite stitching',[.03,.033,.038,1],.93,0),('Silver zipper hardware',[.62,.66,.7,1],.24,1),('Dark zipper coil',[.035,.038,.043,1],.6,.15)]:
     j['materials'].append({'name':name,'pbrMetallicRoughness':{'baseColorFactor':color,'roughnessFactor':rough,'metallicFactor':metal}})
@@ -173,12 +174,12 @@ for i in range(len(p)):
 mesh('Slim perimeter gusset',verts,faces,2)
 for s in [-1,1]:
     tube('Bound perimeter',perimeter(s*.0045),.0008,3,closed=True)
-# Front panel construction seam is present on the revised sheet; back remains clean.
+# Horizontal construction seam and stitching belong on the back only.
 seam_y=.066
 xs=np.linspace(-W/2+.001,W/2-.001,180)
-tube('Front horizontal panel seam',[[x,seam_y,depth(x,seam_y)+.00035] for x in xs],.00043,3)
+tube('Back horizontal panel seam',[[x,seam_y,-depth(x,seam_y)-.00035] for x in xs],.00043,3)
 for i,x in enumerate(np.arange(-W/2+.005,W/2-.004,.003)):
-    tube('Front seam stitch %03d'%i,[[q,seam_y-.0013,depth(q,seam_y-.0013)+.00035] for q in [x,x+.0014]],.00013,4,segments=5)
+    tube('Back seam stitch %03d'%i,[[q,seam_y-.0013,-depth(q,seam_y-.0013)-.00035] for q in [x,x+.0014]],.00013,4,segments=5)
 # Full-width curved zipper, two interlocking dark coil rows and textile tape.
 zip_x=np.linspace(-W/2+.006,W/2-.006,200)
 def zip_y(x): return H/2+.0007-.003*(abs(x)/(W/2))**14

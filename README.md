@@ -6,13 +6,13 @@ All model textures and viewer dependencies are included. GitHub Pages serves the
 
 ## Revised model
 
-The revised character sheet controls design placement. The two pouch photographs guide textile grain, edge folds, stitching, and zipper construction; they do not override the sheet's front seam or stripes on both faces.
+The revised character sheet controls design placement. The two pouch photographs guide textile grain, edge folds, stitching, and zipper construction; the user's final correction places stripes on the front only and the horizontal seam on the back only.
 
 - Body: 16 × 12 inches, approximately 1.5 inches deep at its padded center (406.4 × 304.8 × 38.1 mm), tapering at the bound edges.
-- Tricolor band: 1 inch combined width, three equal cyan/orange/royal-blue stripes, on the right when each face is viewed straight on.
+- Tricolor band: 1 inch combined width, three equal cyan/orange/royal-blue stripes, on the right of the front face only.
 - Front crest: 3 × 2.3-inch artwork area, extracted from the supplied measurement reference without measurement arrows.
 - Front text: 4.5 inches wide, set on two lines. Text is recreated with Arial (or Liberation Sans on Linux).
-- Horizontal front construction seam, fine stitching, silver slider and open pull loop, dark zipper coils and woven pull extension.
+- Horizontal back construction seam, fine stitching, silver slider and open pull loop, dark zipper coils and woven pull extension.
 
 Stripe inset (0.7 inch), crest inset (0.65 inch), seam height, folds, and hardware are visual estimates; this is a closed-pouch design preview, not a manufacturing pattern or interior simulation.
 
