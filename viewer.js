@@ -14,7 +14,7 @@ light(0xffffff,1.6,[1,2,3]);light(0xcbdfff,.7,[-2,0,2]);light(0xffffff,1.5,[1,1,
 const env=new THREE.Scene();env.background=new THREE.Color(0x9099a4);
 for(const [p,s,intensity] of [[[0,3,1],[4,1,3],4],[[-3,1,1],[1,3,4],2],[[3,0,-1],[1,4,3],3]]){const o=new THREE.Mesh(new THREE.BoxGeometry(...s),new THREE.MeshBasicMaterial({color:new THREE.Color(intensity,intensity,intensity)}));o.position.set(...p);env.add(o)}
 const pmrem=new THREE.PMREMGenerator(renderer);scene.environment=pmrem.fromScene(env,.02).texture;pmrem.dispose();
-const views={default:{p:[.31,.14,.70],t:[0,0,0],label:'Three-quarter view'},front:{p:[0,0,.76],t:[0,0,0],label:'Front view'},back:{p:[0,0,-.76],t:[0,0,0],label:'Back view'},side:{p:[.70,.02,.03],t:[0,0,0],label:'Side profile'},detail:{p:[-.09,-.09,.30],t:[-.075,-.098,.016],label:'Crest detail'}};
+const views={default:{p:[.31,.14,.70],t:[0,0,0],label:'Three-quarter view'},front:{p:[0,0,.76],t:[0,0,0],label:'Front view'},back:{p:[0,0,-.76],t:[0,0,0],label:'Back view'},side:{p:[.70,.02,.03],t:[0,0,0],label:'Side profile'},detail:{p:[-.08,-.09,.40],t:[-.08,-.098,.016],label:'Crest detail'}};
 function size(){const w=host.clientWidth,h=host.clientHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();}
 function setView(key){const v=views[key],scale=key==='detail'?1:Math.max(1,.9/camera.aspect);camera.position.set(...v.p).multiplyScalar(scale);controls.target.set(...v.t);controls.update();document.querySelector('#view-label').textContent=v.label;document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===key));}
 new ResizeObserver(size).observe(host);size();setView('default');

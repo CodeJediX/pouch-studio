@@ -38,7 +38,7 @@ def panel_texture(front):
         # Extract only the supplied crest, excluding red measurement annotations.
         crest = np.array(Image.open(REF/'measurements.png').convert('RGB').crop((70,1115,430,1415)))
         cy,cx = np.indices(crest.shape[:2])
-        red = (crest[:,:,0]>160)&(crest[:,:,1]<65)&(crest[:,:,2]<85)
+        red = (crest[:,:,0].astype(float)>crest[:,:,1]*2.)&(crest[:,:,0].astype(float)>crest[:,:,2]*1.6)&(crest[:,:,0]>20)
         annotation = red & ~((cx>105)&(cx<240)&(cy>15)&(cy<125))
         alpha = np.clip((crest.max(axis=2).astype(float)-12)*4,0,255).astype(np.uint8)
         alpha[annotation] = 0
