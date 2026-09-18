@@ -101,7 +101,22 @@ def mesh(name,verts,faces,material,uv=None):
     for k in range(3): np.add.at(normals,faces[:,k],fn)
     normals/=np.maximum(np.linalg.norm(normals,axis=1,keepdims=True),1e-12)
     attr={'POSITION':accessor(v,'VEC3'),'NORMAL':accessor(normals,'VEC3')}
-    if uv is not None: attr['TEXCOORD_0']=accessor(uv,'VEC2')
+    if uv is not None:
+        uv=np.asarray(uv,dtype=float)
+        attr['TEXCOORD_0']=accessor(uv,'VEC2')
+        # Explicit UV tangents keep normal-map shading portable across GLB viewers.
+        e1=v[faces[:,1]]-v[faces[:,0]]; e2=v[faces[:,2]]-v[faces[:,0]]
+        d1=uv[faces[:,1]]-uv[faces[:,0]]; d2=uv[faces[:,2]]-uv[faces[:,0]]
+        inv=1/(d1[:,0]*d2[:,1]-d1[:,1]*d2[:,0])
+        ft=(e1*d2[:,1,None]-e2*d1[:,1,None])*inv[:,None]
+        fb=(e2*d1[:,0,None]-e1*d2[:,0,None])*inv[:,None]
+        t=np.zeros_like(v); b=np.zeros_like(v)
+        for k in range(3):
+            np.add.at(t,faces[:,k],ft); np.add.at(b,faces[:,k],fb)
+        t-=normals*np.sum(normals*t,axis=1,keepdims=True)
+        t/=np.linalg.norm(t,axis=1,keepdims=True)
+        handed=np.where(np.sum(np.cross(normals,t)*b,axis=1)<0,-1,1)
+        attr['TANGENT']=accessor(np.column_stack([t,handed]),'VEC4')
     j['meshes'].append({'name':name,'primitives':[{'attributes':attr,'indices':accessor(faces.flatten(),'SCALAR'),'material':material}]})
     j['nodes'].append({'name':name,'mesh':len(j['meshes'])-1}); j['scenes'][0]['nodes'].append(len(j['nodes'])-1)
 
