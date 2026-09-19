@@ -13,6 +13,9 @@ W, H, D = 16*INCH, 12*INCH, 1.5*INCH
 R = .014
 TW, TH = 2048, 1536
 PPIN = TW/16
+CREST_INCHES = (3, 2.3)
+TEXT_WIDTH_INCHES = 4.5
+STRIPE_WIDTH_INCHES = 1
 
 # Sample the photographed textile, removing broad baked-in lighting before tiling.
 sample = ImageOps.grayscale(Image.open(REF/'fabric-and-seam.png').crop((390,530,646,786)))
@@ -30,9 +33,9 @@ def panel_texture(front):
     arr = cloth.copy()
     if front:
         # One inch TOTAL, split equally into cyan / orange / royal blue.
-        start = round((16-.7-1)*PPIN)
+        start = round((16-.7-STRIPE_WIDTH_INCHES)*PPIN)
         for k,color in enumerate(colors):
-            left,right = start+round(k*PPIN/3),start+round((k+1)*PPIN/3)
+            left,right = start+round(k*STRIPE_WIDTH_INCHES*PPIN/3),start+round((k+1)*STRIPE_WIDTH_INCHES*PPIN/3)
             arr[:,left:right] = np.clip(np.array(color)[None,None,:]*(.95+(base[:,left:right,None].astype(float)-30)/190),0,255)
     im = Image.fromarray(arr)
     if front:
@@ -43,8 +46,11 @@ def panel_texture(front):
         annotation = red & ((cx<43)|(cy<12)|((cx>265)&(cy<45)))
         alpha = np.clip((crest.max(axis=2).astype(float)-12)*4,0,255).astype(np.uint8)
         alpha[annotation] = 0
-        logo = Image.fromarray(np.dstack([crest,alpha])).resize((round(3*PPIN),round(2.3*PPIN)),Image.Resampling.LANCZOS)
-        im.paste(logo,(round(.65*PPIN),round((12-.65-2.3)*PPIN)),logo)
+        logo = Image.fromarray(np.dstack([crest,alpha]))
+        # Size the visible crest, excluding the transparent extraction margin.
+        logo = logo.crop(logo.getbbox())
+        logo = logo.resize(tuple(round(value*PPIN) for value in CREST_INCHES),Image.Resampling.LANCZOS)
+        im.paste(logo,(round(.65*PPIN),round((12-.65-CREST_INCHES[1])*PPIN)),logo)
         text = Image.new('RGBA',(1100,190))
         draw = ImageDraw.Draw(text)
         font_path = Path('C:/Windows/Fonts/arial.ttf') if Path('C:/Windows/Fonts/arial.ttf').exists() else Path('/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf')
@@ -52,7 +58,7 @@ def panel_texture(front):
         lines = ['General Sir John Kotelawala','Defence University']
         for row,line in enumerate(lines): draw.text((0,row*83),line,font=font,fill=(237,239,242,255),stroke_width=0)
         box = text.getbbox(); text = text.crop(box)
-        text = text.resize((round(4.5*PPIN),round(text.height*4.5*PPIN/text.width)),Image.Resampling.LANCZOS)
+        text = text.resize((round(TEXT_WIDTH_INCHES*PPIN),round(text.height*TEXT_WIDTH_INCHES*PPIN/text.width)),Image.Resampling.LANCZOS)
         im.paste(text,(round(3.95*PPIN),round((12-.92)*PPIN)-text.height),text)
     return im
 
@@ -65,7 +71,9 @@ normal_image = Image.fromarray(np.uint8(np.clip((normal*.5+.5)*255,0,255)))
 
 j = {'asset':{'version':'2.0','generator':'Pouch Studio reference reconstruction','extras':{
     'dimensions_inches':[16,12,1.5],'depth_is_approximate':True,
-    'stripe_total_width_inches':1,'crest_inches':[3,2.3],'text_width_inches':4.5,
+    'stripe_total_width_inches':STRIPE_WIDTH_INCHES,'crest_inches':list(CREST_INCHES),'text_width_inches':TEXT_WIDTH_INCHES,
+    'artwork_measurement_basis':'Visible artwork bounds, measured in the front plane; texture precision 1/128 inch.',
+    'stripe_face':'front','horizontal_seam_face':'back',
     'reference':'Revised character sheet controls design; photographs control textile and construction details.'}},
     'scene':0,'scenes':[{'nodes':[]}],'nodes':[],'meshes':[],'materials':[],
     'buffers':[],'bufferViews':[],'accessors':[],'images':[],'textures':[],

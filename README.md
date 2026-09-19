@@ -10,7 +10,7 @@ The revised character sheet controls design placement. The two pouch photographs
 
 - Body: 16 × 12 inches, approximately 1.5 inches deep at its padded center (406.4 × 304.8 × 38.1 mm), tapering at the bound edges.
 - Tricolor band: 1 inch combined width, three equal cyan/orange/royal-blue stripes, on the right of the front face only.
-- Front crest: 3 × 2.3-inch artwork area, extracted from the supplied measurement reference without measurement arrows.
+- Front crest: 3 × 2.3-inch visible artwork bounds, extracted from the supplied measurement reference without measurement arrows or transparent extraction margins. Artwork dimensions are measured in the front plane with 1/128-inch texture precision.
 - Front text: 4.5 inches wide, set on two lines. Text is recreated with Arial (or Liberation Sans on Linux).
 - Horizontal back construction seam, fine stitching, silver slider and open pull loop, dark zipper coils and woven pull extension.
 
