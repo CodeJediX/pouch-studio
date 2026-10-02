@@ -192,7 +192,7 @@ $('#search').oninput=renderCards;$('#filter').onchange=renderCards;
 $$('.seg button').forEach(b=>b.onclick=()=>{$$('.seg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');range=+b.dataset.r;renderTimeline()});
 $('#prevM').onclick=()=>{month=new Date(month.getFullYear(),month.getMonth()-1,1);renderCalendar()};$('#nextM').onclick=()=>{month=new Date(month.getFullYear(),month.getMonth()+1,1);renderCalendar()};$('#todayM').onclick=()=>{month=new Date();renderCalendar()};
 
-function download(name,text,type){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)}
+function download(name,text,type){if(window.DeadlineAtlasAndroid?.saveFile){const bytes=new TextEncoder().encode(text);let binary='';for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));window.DeadlineAtlasAndroid.saveFile(name,type,btoa(binary));return}let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)}
 $('#backupBtn').onclick=()=>download('deadline-atlas-backup.json',JSON.stringify(data,null,2),'application/json');
 $('#icsBtn').onclick=()=>{let s='BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Deadline Atlas//EN\r\n';allMilestones().concat(data.map(c=>({date:due(c),title:'Main deadline',competition:c.name,id:c.id}))).forEach(e=>{let dt=e.date.replace(/-/g,'');s+='BEGIN:VEVENT\r\nDTSTART;VALUE=DATE:'+dt+'\r\nSUMMARY:'+e.competition+' — '+e.title+'\r\nEND:VEVENT\r\n'});s+='END:VCALENDAR\r\n';download('deadline-atlas.ics',s,'text/calendar')};
 
