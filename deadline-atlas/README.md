@@ -8,7 +8,8 @@ Features:
 - Visual 30 / 60 / 90 day competition roadmap
 - Monthly calendar and focus queue
 - Deadline risk radar and progress cards
-- Supabase PostgreSQL persistence with passwordless email sign-in
+- Supabase PostgreSQL persistence with username/password sign-in
+- One-time email confirmation for new accounts
 - Per-user Row Level Security (RLS)
 - One-time migration of existing browser data after the first sign-in
 - Smart import for PDF, DOCX, TXT, PNG, JPG and WEBP
@@ -33,5 +34,7 @@ browser client contains only the browser-safe anonymous API key; privileged
 service-role credentials are never shipped to the page.
 
 The reproducible database definition is in `supabase-schema.sql`. It creates the
-`competitions` table, a server-side first-run marker, explicit Data API grants
-for authenticated users, and owner-only Row Level Security policies.
+`profiles` and `competitions` tables, a server-side first-run marker, explicit
+Data API grants, an account-profile trigger, and owner-only Row Level Security
+policies. `supabase/functions/username-login` securely resolves usernames on the
+server without exposing email addresses to the browser.

@@ -1,6 +1,66 @@
 -- Deadline Atlas database schema for Supabase.
 -- Apply in the Supabase SQL Editor for the target project.
 
+create schema if not exists private;
+revoke all on schema private from public, anon, authenticated;
+
+create table public.profiles (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  username text not null unique
+    check (username ~ '^[a-z0-9][a-z0-9._-]{2,29}$'),
+  created_at timestamptz not null default now()
+);
+
+alter table public.profiles enable row level security;
+alter table public.profiles force row level security;
+
+revoke all on table public.profiles from anon, authenticated;
+grant select, insert, update on table public.profiles to authenticated;
+grant select on table public.profiles to service_role;
+
+create policy "Users can read their profile"
+on public.profiles for select
+to authenticated
+using ((select auth.uid()) = user_id);
+
+create policy "Users can create their profile"
+on public.profiles for insert
+to authenticated
+with check ((select auth.uid()) = user_id);
+
+create policy "Users can update their profile"
+on public.profiles for update
+to authenticated
+using ((select auth.uid()) = user_id)
+with check ((select auth.uid()) = user_id);
+
+create or replace function private.create_user_profile()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  normalized_username text := lower(btrim(new.raw_user_meta_data ->> 'username'));
+begin
+  if normalized_username is null
+    or normalized_username !~ '^[a-z0-9][a-z0-9._-]{2,29}$' then
+    raise exception 'A valid username is required';
+  end if;
+
+  insert into public.profiles (user_id, username)
+  values (new.id, normalized_username);
+  return new;
+end;
+$$;
+
+revoke all on function private.create_user_profile()
+  from public, anon, authenticated;
+
+create trigger create_profile_after_signup
+after insert on auth.users
+for each row execute function private.create_user_profile();
+
 create table public.competitions (
   user_id uuid not null references auth.users(id) on delete cascade,
   id text not null,
