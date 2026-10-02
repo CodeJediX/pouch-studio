@@ -11,6 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://unpkg.com/mammoth@1.8.0/mammoth.browser.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
@@ -20,11 +21,15 @@
 @media(max-width:980px){.stats{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}.cards{grid-template-columns:repeat(2,1fr)}.hero{align-items:start;flex-direction:column}.hero h1{font-size:48px}}
 @media(max-width:640px){.importTools{grid-template-columns:1fr}.wrap{padding:0 15px}.top{height:70px}.actions .hideMob{display:none}.hero{padding-top:38px}.hero h1{font-size:42px}.stats{grid-template-columns:1fr 1fr}.cards{grid-template-columns:1fr}.form{grid-template-columns:1fr}.field.full{grid-column:auto}.lane{grid-template-columns:120px 1fr}.smart{grid-template-columns:1fr}.smart .btn{width:100%}.search{min-width:0;width:100%}}
 </style>
+<style>
+.cloudState{display:inline-flex;align-items:center;gap:7px;border:1px solid #2c4437;background:#101a15;color:#a5ffc1;border-radius:999px;padding:8px 10px;font-size:10px;font-weight:700}.cloudState::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px rgba(109,255,155,.6)}.cloudState.loading::before{background:var(--yellow)}.accountBtn{max-width:180px}.accountBtn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.authGate{width:min(520px,calc(100% - 28px));border:0;padding:0;background:transparent;color:var(--text)}.authGate::backdrop{background:rgba(3,7,5,.88);backdrop-filter:blur(16px)}.authCard{position:relative;overflow:hidden;border:1px solid #31503e;background:radial-gradient(600px 260px at 10% 0,rgba(109,255,155,.13),transparent 60%),#0e1612;border-radius:28px;padding:32px;box-shadow:0 32px 120px rgba(0,0,0,.55)}.authOrb{width:58px;height:58px;border:1px solid #345541;border-radius:19px;display:grid;place-items:center;background:#111d17;color:var(--green);margin-bottom:24px}.authOrb svg{width:29px}.authCard h2{font:600 34px/1 "Space Grotesk";letter-spacing:-.04em;margin:0}.authCard>p{color:#91a198;line-height:1.65;margin:13px 0 24px}.authForm{display:grid;gap:10px}.authForm input{width:100%;border:1px solid #30443a;background:#09100d;color:#eef7f2;border-radius:14px;padding:14px;outline:none}.authForm input:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(109,255,155,.1)}.authForm .btn{min-height:48px}.authNote{min-height:18px;color:#8fa097;font-size:11px;line-height:1.5;margin-top:12px}.authTrust{display:flex;gap:8px;align-items:center;color:#6f8077;font-size:10px;margin-top:20px}.authTrust svg{width:14px;color:var(--green)}
+@media(max-width:640px){.actions .cloudState{display:none}.accountBtn{max-width:44px;padding:11px}.accountBtn span{display:none}.authCard{padding:25px}.authCard h2{font-size:30px}}
+</style>
 </head>
 <body>
 <header class="top"><div class="wrap" style="width:100%;display:flex;align-items:center;justify-content:space-between">
 <div class="brand"><div class="mark"><i data-lucide="orbit"></i></div><div><strong>Deadline Atlas</strong><small>Competition command center</small></div></div>
-<div class="actions"><button class="btn ghost" id="backupBtn"><i data-lucide="download"></i><span class="hideMob">Backup</span></button><button class="btn ghost" id="icsBtn"><i data-lucide="calendar-plus"></i><span class="hideMob">Calendar</span></button><button class="btn primary" id="importTop"><i data-lucide="scan-line"></i><span>Smart Import</span></button></div>
+<div class="actions"><span class="cloudState loading" id="cloudState">Connecting</span><button class="btn ghost accountBtn hidden" id="accountBtn" title="Sign out"><i data-lucide="user-round"></i><span id="accountEmail">Account</span></button><button class="btn ghost" id="backupBtn"><i data-lucide="download"></i><span class="hideMob">Backup</span></button><button class="btn ghost" id="icsBtn"><i data-lucide="calendar-plus"></i><span class="hideMob">Calendar</span></button><button class="btn primary" id="importTop"><i data-lucide="scan-line"></i><span>Smart Import</span></button></div>
 </div></header>
 <main class="wrap">
 <section class="hero"><div><p class="eyebrow">ONE PLACE FOR EVERY DEADLINE</p><h1>See the whole competition season <span>before it gets chaotic.</span></h1><p class="copy">Track submissions, model builds, finals and team tasks in one roadmap. Add competitions manually or drop a PDF, Word document, poster or screenshot and Deadline Atlas extracts the dates for review.</p></div><button class="btn primary" id="addBtn"><i data-lucide="plus"></i> Add competition</button></section>
@@ -37,7 +42,7 @@
 <section class="panel"><div class="head"><div><p class="kicker">MONTH VIEW</p><h2 id="monthTitle">Calendar</h2></div><div class="calControls"><button class="btn ghost" id="prevM"><i data-lucide="chevron-left"></i></button><button class="btn ghost" id="todayM">Today</button><button class="btn ghost" id="nextM"><i data-lucide="chevron-right"></i></button></div></div><div class="calendar"><div class="week"><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div><div>SUN</div></div><div class="days" id="calendar"></div></div></section>
 <section class="panel"><div class="head"><div><p class="kicker">ALL COMPETITIONS</p><h2>Control board</h2></div><div class="filters"><input class="input search" id="search" placeholder="Search competition…"><select class="select" id="filter"><option value="all">All status</option><option value="active">Active</option><option value="review">Needs review</option><option value="done">Done</option></select></div></div><div class="cards" id="cards"></div></section>
 <section class="smart"><div><h3>Drop in the competition brief. The timeline builds itself.</h3><p>PDF, DOCX, TXT, PNG, JPG and WEBP are read in your browser. Imported items are marked “Needs review” so you can confirm the detected dates.</p></div><button class="btn ghost" id="importBottom" style="background:#102018;color:#dfffe9"><i data-lucide="upload-cloud"></i> Import a file</button></section>
-<div class="footer"><span>Deadline Atlas</span><span>Data is stored locally in this browser.</span></div>
+<div class="footer"><span>Deadline Atlas</span><span>Securely synced across your devices.</span></div>
 </main>
 
 <dialog class="modal" id="editDlg"><div class="modalCard"><div class="modalHead"><div><p class="kicker">COMPETITION</p><h2 id="editTitle">Add competition</h2></div><button class="x" id="closeEdit">×</button></div>
@@ -57,25 +62,62 @@
 <div class="importTools"><div class="aiBox"><div class="aiHead"><b><i data-lucide="sparkles"></i> AI understanding</b><span class="aiTag" id="aiState">OPTIONAL</span></div><p>Add a Gemini API key for better title, deadline, milestone and category extraction. The key is stored only in this browser and is never committed to GitHub.</p><div class="keyRow"><input id="geminiKey" type="password" autocomplete="off" placeholder="Paste Gemini API key"><button class="btn ghost" id="saveKey" type="button">Save</button></div><a class="tinyLink" href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Get / manage an API key in Google AI Studio ↗</a></div><div class="pasteBox"><b style="font-size:11px">Paste announcement text</b><p style="font-size:10px;color:#819087;margin:6px 0 8px">Useful when a poster or scanned PDF is difficult to read.</p><textarea id="pasteText" placeholder="Paste competition message, email, WhatsApp notice, etc."></textarea><button class="btn ghost" id="parsePaste" type="button" style="margin-top:7px;width:100%"><i data-lucide="wand-sparkles"></i> Parse pasted text</button></div></div>
 <div class="progressWrap hidden" id="prog"><div style="display:flex;justify-content:space-between"><b id="progLabel">Reading file…</b><span id="progPct">0%</span></div><div class="progressLine"><div id="progBar"></div></div><small style="color:var(--muted)" id="progHint">Extracting text in your browser.</small></div><div class="result hidden" id="result"></div></div></dialog>
 
+<dialog class="authGate" id="authDlg"><div class="authCard"><div class="authOrb"><i data-lucide="orbit"></i></div><p class="eyebrow">YOUR PRIVATE COMPETITION CLOUD</p><h2>Sign in to your atlas.</h2><p>Your deadlines now live in a secure database instead of one browser. Enter your email and we’ll send a one-time sign-in link.</p><form class="authForm" id="authForm"><input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com" aria-label="Email address" required><button class="btn primary" type="submit"><i data-lucide="mail"></i> Email me a secure link</button></form><div class="authNote" id="authNote"></div><div class="authTrust"><i data-lucide="shield-check"></i><span>Protected by Supabase Auth and row-level security.</span></div></div></dialog>
+
 <div class="toast hidden" id="toast"></div>
 
 <script>
 const KEY='deadline-atlas-v2';
+const SUPABASE_URL='https://lhfvztorzorksiysppef.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxoZnZ6dG9yem9ya3NpeXNwcGVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA5NDkzNDAsImV4cCI6MjEwNjUyNTM0MH0.zlHV8Ir1p9Kt6aRQiBnbJKCbvqyRQY5CwgdmHzCBoug';
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 const seed=[
 {id:'innova',name:'INNOVA',deadline:'2026-10-11',category:'AI / Data',status:'active',priority:'high',next:'Finalize proposal submission',notes:'Imported from handwritten time plan.',m:[{date:'2026-10-11',title:'Proposal submission'}]},
 {id:'modelx',name:'ModelX',deadline:'2026-10-13',category:'AI / Data',status:'active',priority:'high',next:'Finish proposal',notes:'Imported from handwritten time plan.',m:[{date:'2026-10-13',title:'Proposal submission'},{date:'2026-10-26',title:'Model development target'}]},
 {id:'cybots',name:'Cybots',deadline:'2026-10-18',category:'Cybersecurity',status:'active',priority:'medium',next:'Confirm submission requirements',notes:'Imported from handwritten time plan.',m:[{date:'2026-10-18',title:'Competition deadline'}]}
 ];
-let data=JSON.parse(localStorage.getItem(KEY)||'null')||seed,range=30,month=new Date(2026,9,1);
+let data=[],currentUser=null,loadedUserId=null,range=30,month=new Date(new Date().getFullYear(),new Date().getMonth(),1);
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const iso=d=>{const x=new Date(d.getTime()-d.getTimezoneOffset()*60000);return x.toISOString().slice(0,10)}
 const today=()=>iso(new Date());
 const days=(a,b)=>Math.ceil((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000);
 const fmt=d=>new Date(d+'T00:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
-const save=()=>{localStorage.setItem(KEY,JSON.stringify(data));render()}
+const fromRow=r=>({id:r.id,name:r.name,deadline:r.deadline,category:r.category,status:r.status,priority:r.priority,next:r.next_action,notes:r.notes,m:r.milestones||[]});
+const toRow=c=>({user_id:currentUser.id,id:c.id,name:c.name,deadline:c.deadline,category:c.category,status:c.status,priority:c.priority,next_action:c.next||'',notes:c.notes||'',milestones:c.m||[],updated_at:new Date().toISOString()});
 const due=c=>c.deadline||[...(c.m||[])].sort((a,b)=>a.date.localeCompare(b.date))[0]?.date||today();
 function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
 function toast(t,m=''){const el=$('#toast');el.innerHTML='<b>'+esc(t)+'</b><div style="color:#95a39b;margin-top:2px">'+esc(m)+'</div>';el.classList.remove('hidden');clearTimeout(window._tt);window._tt=setTimeout(()=>el.classList.add('hidden'),3200)}
+function setCloud(label,loading=false){$('#cloudState').textContent=label;$('#cloudState').classList.toggle('loading',loading)}
+function showAuth(){setCloud('Sign in',true);$('#accountBtn').classList.add('hidden');if(!$('#authDlg').open)$('#authDlg').showModal();lucide.createIcons()}
+function legacyData(){try{const stored=JSON.parse(localStorage.getItem(KEY)||'null');return Array.isArray(stored)?stored:seed}catch{return seed}}
+async function loadCloudData(migrate=true){
+ setCloud('Syncing',true);
+ const [{data:rows,error},{data:state,error:stateError}]=await Promise.all([
+  db.from('competitions').select('*').order('deadline',{ascending:true}),
+  db.from('user_app_state').select('initialized_at').maybeSingle()
+ ]);
+ if(error)throw error;if(stateError)throw stateError;
+ if(!state&&migrate){
+  const legacy=legacyData();
+  if(legacy.length){const {error:migrationError}=await db.from('competitions').upsert(legacy.map(toRow),{onConflict:'user_id,id'});if(migrationError)throw migrationError}
+  const {error:stateWriteError}=await db.from('user_app_state').upsert({user_id:currentUser.id,initialized_at:new Date().toISOString()},{onConflict:'user_id'});if(stateWriteError)throw stateWriteError;
+  toast('Cloud setup complete',legacy.length+' competition'+(legacy.length===1?'':'s')+' added securely.');return loadCloudData(false)
+ }
+ data=(rows||[]).map(fromRow);render();setCloud('Cloud synced');
+}
+async function enterApp(user){if(loadedUserId===user.id)return;currentUser=user;loadedUserId=user.id;$('#accountEmail').textContent=user.email||'Account';$('#accountBtn').classList.remove('hidden');if($('#authDlg').open)$('#authDlg').close();try{await loadCloudData()}catch(err){setCloud('Sync error',true);showAuth();$('#authNote').textContent='Could not load your database: '+(err.message||'Unknown error')}}
+async function persistCompetition(obj){
+ const {data:row,error}=await db.from('competitions').upsert(toRow(obj),{onConflict:'user_id,id'}).select().single();
+ if(error)throw error;const saved=fromRow(row),i=data.findIndex(x=>x.id===saved.id);if(i>=0)data[i]=saved;else data.push(saved);render();setCloud('Cloud synced');return saved;
+}
+async function removeCompetition(id){const {error}=await db.from('competitions').delete().eq('id',id);if(error)throw error;data=data.filter(x=>x.id!==id);render();setCloud('Cloud synced')}
+async function initApp(){
+ lucide.createIcons();setCloud('Connecting',true);
+ const {data:{session},error}=await db.auth.getSession();
+ if(error){showAuth();$('#authNote').textContent='Could not start sign-in: '+error.message;return}
+ if(session)await enterApp(session.user);else showAuth();
+ db.auth.onAuthStateChange((event,nextSession)=>setTimeout(()=>{if(nextSession)enterApp(nextSession.user);else{currentUser=null;loadedUserId=null;data=[];showAuth()}},0));
+}
 function statusPill(c){const d=days(today(),due(c));return d<0?'critical':d<=7?'critical':d<=21?'soon':'safe'}
 function progress(c){const ms=c.m||[];if(!ms.length)return c.status==='done'?100:0;return Math.round(ms.filter(x=>x.done).length/ms.length*100)}
 function allMilestones(){return data.flatMap(c=>(c.m||[]).map(x=>({...x,competition:c.name,cid:c.id})))}
@@ -118,8 +160,11 @@ function openEdit(id){
  const c=id?data.find(x=>x.id===id):null;$('#editTitle').textContent=c?'Edit competition':'Add competition';$('#fid').value=c?.id||'';$('#fname').value=c?.name||'';$('#fdate').value=c?.deadline||today();$('#fcat').value=c?.category||'AI / Data';$('#fstatus').value=c?.status||'active';$('#fpriority').value=c?.priority||'medium';$('#fnext').value=c?.next||'';$('#fnotes').value=c?.notes||'';$('#fmiles').value=(c?.m||[]).map(x=>x.date+' | '+x.title).join('\n');$('#deleteBtn').classList.toggle('hidden',!c);$('#editDlg').showModal();
 }
 function parseMilestones(s){return s.split(/\n+/).map(x=>x.trim()).filter(Boolean).map(x=>{let m=x.match(/^(\d{4}-\d{2}-\d{2})\s*[|—-]\s*(.+)$/);return m?{date:m[1],title:m[2].trim()}:null}).filter(Boolean)}
-$('#form').onsubmit=e=>{e.preventDefault();let id=$('#fid').value||'c'+Date.now();let obj={id,name:$('#fname').value.trim(),deadline:$('#fdate').value,category:$('#fcat').value,status:$('#fstatus').value,priority:$('#fpriority').value,next:$('#fnext').value.trim(),notes:$('#fnotes').value.trim(),m:parseMilestones($('#fmiles').value)};let i=data.findIndex(x=>x.id===id);if(i>=0)data[i]=obj;else data.push(obj);$('#editDlg').close();save();toast('Competition saved',obj.name)}
-$('#deleteBtn').onclick=()=>{let id=$('#fid').value,c=data.find(x=>x.id===id);if(!c)return;if(confirm('Delete '+c.name+'?')){data=data.filter(x=>x.id!==id);$('#editDlg').close();save();toast('Deleted',c.name)}}
+$('#authDlg').addEventListener('cancel',e=>e.preventDefault());
+$('#authForm').onsubmit=async e=>{e.preventDefault();const email=$('#authEmail').value.trim(),button=e.submitter;button.disabled=true;$('#authNote').textContent='Sending your secure sign-in link…';const redirectTo=location.origin+location.pathname;const {error}=await db.auth.signInWithOtp({email,options:{emailRedirectTo:redirectTo,shouldCreateUser:true}});button.disabled=false;$('#authNote').textContent=error?'Could not send the link: '+error.message:'Check your email. The one-time link will return you here.'};
+$('#accountBtn').onclick=async()=>{setCloud('Signing out',true);await db.auth.signOut()};
+$('#form').onsubmit=async e=>{e.preventDefault();let id=$('#fid').value||(crypto.randomUUID?crypto.randomUUID():'c'+Date.now());let obj={id,name:$('#fname').value.trim(),deadline:$('#fdate').value,category:$('#fcat').value,status:$('#fstatus').value,priority:$('#fpriority').value,next:$('#fnext').value.trim(),notes:$('#fnotes').value.trim(),m:parseMilestones($('#fmiles').value)},button=e.submitter;button.disabled=true;setCloud('Saving',true);try{await persistCompetition(obj);$('#editDlg').close();toast('Competition saved',obj.name)}catch(err){setCloud('Sync error',true);toast('Could not save',err.message||'Database request failed.')}finally{button.disabled=false}}
+$('#deleteBtn').onclick=async()=>{let id=$('#fid').value,c=data.find(x=>x.id===id);if(!c)return;if(confirm('Delete '+c.name+'?')){setCloud('Deleting',true);try{await removeCompetition(id);$('#editDlg').close();toast('Deleted',c.name)}catch(err){setCloud('Sync error',true);toast('Could not delete',err.message||'Database request failed.')}}}
 $('#addBtn').onclick=()=>openEdit();$('#closeEdit').onclick=$('#cancelEdit').onclick=()=>$('#editDlg').close();document.addEventListener('click',e=>{let t=e.target.closest('[data-open]');if(t)openEdit(t.dataset.open)});
 $('#search').oninput=renderCards;$('#filter').onchange=renderCards;
 $$('.seg button').forEach(b=>b.onclick=()=>{$$('.seg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');range=+b.dataset.r;renderTimeline()});
@@ -153,10 +198,10 @@ async function processText(text,source){
  if(key){prog(76,'AI is understanding the competition','Extracting title, deadline, milestones and next action.');try{parsed=await geminiExtract(text,source,key)}catch(aiErr){console.warn('Gemini fallback:',aiErr);prog(83,'AI unavailable — using local parser','The document was still read successfully.')}}
  if(!parsed){prog(88,'Finding dates and milestones','Using the improved local parser.');parsed=extract(text,source)}
  if(!parsed)throw new Error('Text was read, but no competition deadline could be identified. Try AI mode or paste the announcement text.');
- parsed.id='imp'+Date.now();parsed.status='review';data.push(parsed);localStorage.setItem(KEY,JSON.stringify(data));render();prog(100,'Roadmap created','Please review detected information before relying on the deadline.');
+ parsed.id=crypto.randomUUID?crypto.randomUUID():'imp'+Date.now();parsed.status='review';setCloud('Saving import',true);await persistCompetition(parsed);prog(100,'Roadmap created','Saved securely. Please review detected information before relying on the deadline.');
  $('#result').classList.remove('hidden');
  $('#result').innerHTML='<div style="display:flex;justify-content:space-between;gap:10px;align-items:start"><div><b>'+esc(parsed.name)+' added</b><div style="color:#8e9d95;margin-top:6px;font-size:11px">Main deadline: '+fmt(parsed.deadline)+' • '+parsed.m.length+' milestones • '+(parsed.ai?'AI assisted':'Local parser')+'</div></div><span class="pill soon">REVIEW</span></div><div style="display:flex;gap:7px;margin-top:12px"><button class="btn primary" id="reviewNew">Review details</button><button class="btn ghost" id="undoImport">Undo</button></div>';
- $('#reviewNew').onclick=()=>{importDlg.close();openEdit(parsed.id)};$('#undoImport').onclick=()=>{data=data.filter(x=>x.id!==parsed.id);localStorage.setItem(KEY,JSON.stringify(data));render();$('#result').classList.add('hidden');toast('Import undone',parsed.name)};lucide.createIcons()
+ $('#reviewNew').onclick=()=>{importDlg.close();openEdit(parsed.id)};$('#undoImport').onclick=async()=>{try{await removeCompetition(parsed.id);$('#result').classList.add('hidden');toast('Import undone',parsed.name)}catch(err){toast('Could not undo',err.message||'Database request failed.')}};lucide.createIcons()
  }catch(err){showImportError(err)}
 }
 function showImportError(err){prog(100,'Could not import','Nothing was added to your roadmap.');$('#result').classList.remove('hidden');$('#result').innerHTML='<b style="color:#ff9da2">Import needs help</b><div style="color:#93a199;margin-top:6px;font-size:11px;line-height:1.55">'+esc(err?.message||'Could not read this file.')+'</div><div style="color:#728078;margin-top:7px;font-size:10px">Try enabling AI with a Gemini key, paste the announcement text, or use a clearer image/PDF.</div>';toast('Import not added',err?.message||'Could not read the file')}
@@ -183,6 +228,6 @@ function extract(text,filename){
 }
 function milestoneTitle(line){const mon='Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?';let s=line.replace(/\b20\d{2}-\d{2}-\d{2}\b/g,'').replace(/\b\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4}\b/g,'').replace(new RegExp('\\b(?:'+mon+')\\s+\\d{1,2}(?:st|nd|rd|th)?(?:,?\\s+\\d{2,4})?','ig'),'').replace(new RegExp('\\b\\d{1,2}(?:st|nd|rd|th)?\\s+(?:'+mon+')(?:\\s+\\d{2,4})?','ig'),'').replace(/^[\s:—–\-|]+|[\s:—–\-|]+$/g,'').trim();return(s||'Milestone').slice(0,100)}
 function dateCandidates(s,defaultYear=new Date().getFullYear()){let out=[],months={jan:0,january:0,feb:1,february:1,mar:2,march:2,apr:3,april:3,may:4,jun:5,june:5,jul:6,july:6,aug:7,august:7,sep:8,sept:8,september:8,oct:9,october:9,nov:10,november:10,dec:11,december:11},m;const mon='Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?';let r=new RegExp('\\b('+mon+')\\s+(\\d{1,2})(?:st|nd|rd|th)?(?:,?\\s+(\\d{2,4}))?\\b','ig');while((m=r.exec(s))){let y=m[3]?+m[3]:defaultYear;if(y<100)y+=2000;let k=m[1].toLowerCase(),mo=months[k]??months[k.slice(0,3)];out.push(iso(new Date(y,mo,+m[2])))}let r0=new RegExp('\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+('+mon+')(?:,?\\s+(\\d{2,4}))?\\b','ig');while((m=r0.exec(s))){let y=m[3]?+m[3]:defaultYear;if(y<100)y+=2000;let k=m[2].toLowerCase(),mo=months[k]??months[k.slice(0,3)];out.push(iso(new Date(y,mo,+m[1])))}let rIso=/\b(20\d{2})-(\d{1,2})-(\d{1,2})\b/g;while((m=rIso.exec(s)))out.push(iso(new Date(+m[1],+m[2]-1,+m[3])));let r2=/\b(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})\b/g;while((m=r2.exec(s))){let a=+m[1],b=+m[2],y=+m[3];if(y<100)y+=2000;let day=a,mo=b-1;if(a<=12&&b>12){day=b;mo=a-1}let d=new Date(y,mo,day);if(!isNaN(d))out.push(iso(d))}return[...new Set(out)]}
-render();
+initApp();
 </script>
 </body></html>
