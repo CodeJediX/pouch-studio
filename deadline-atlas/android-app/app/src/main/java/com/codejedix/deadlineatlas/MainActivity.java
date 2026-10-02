@@ -1,10 +1,13 @@
 package com.codejedix.deadlineatlas;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Message;
 import android.util.Base64;
@@ -31,6 +34,7 @@ public class MainActivity extends Activity {
     private static final String APP_URL = "https://codejedix.github.io/pouch-studio/deadline-atlas/";
     private static final int PICK_FILE_REQUEST = 1001;
     private static final int SAVE_FILE_REQUEST = 1002;
+    private static final int NOTIFICATION_PERMISSION_REQUEST = 1003;
     private static final int MAX_EXPORT_BYTES = 16 * 1024 * 1024;
 
     private WebView webView;
@@ -59,6 +63,8 @@ public class MainActivity extends Activity {
         root.addView(progressBar, progressParams);
         setContentView(root);
 
+        NotificationScheduler.ensureChannel(this);
+        NotificationScheduler.scheduleStored(this);
         configureWebView();
         String initialUrl = safeAppUrl(getIntent() == null ? null : getIntent().getData());
         if (savedInstanceState == null) webView.loadUrl(initialUrl);
@@ -76,7 +82,7 @@ public class MainActivity extends Activity {
         settings.setMediaPlaybackRequiresUserGesture(true);
         settings.setSupportMultipleWindows(true);
         settings.setJavaScriptCanOpenWindowsAutomatically(false);
-        settings.setUserAgentString(settings.getUserAgentString() + " DeadlineAtlasAndroid/1.0");
+        settings.setUserAgentString(settings.getUserAgentString() + " DeadlineAtlasAndroid/1.1");
 
         CookieManager.getInstance().setAcceptCookie(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
@@ -231,6 +237,37 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode != NOTIFICATION_PERMISSION_REQUEST) return;
+        boolean granted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+        if (granted) {
+            NotificationScheduler.showTest(this);
+            NotificationScheduler.scheduleStored(this);
+        }
+        reportNotificationResult(granted);
+    }
+
+    private boolean notificationsGranted() {
+        return Build.VERSION.SDK_INT < 33 ||
+                checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestOrShowTestNotification() {
+        if (notificationsGranted()) {
+            NotificationScheduler.showTest(this);
+            reportNotificationResult(true);
+        } else if (Build.VERSION.SDK_INT >= 33) {
+            requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTIFICATION_PERMISSION_REQUEST);
+        }
+    }
+
+    private void reportNotificationResult(boolean granted) {
+        if (webView == null) return;
+        webView.evaluateJavascript("window.deadlineAtlasNotificationResult(" + granted + ")", null);
+    }
+
+    @Override
     protected void onDestroy() {
         if (fileChooserCallback != null) fileChooserCallback.onReceiveValue(null);
         if (webView != null) {
@@ -241,6 +278,27 @@ public class MainActivity extends Activity {
     }
 
     public final class AndroidBridge {
+        @JavascriptInterface
+        public void scheduleNotifications(String payload) {
+            runOnUiThread(() -> NotificationScheduler.scheduleFromPayload(MainActivity.this, payload));
+        }
+
+        @JavascriptInterface
+        public String showTestNotification() {
+            boolean granted = notificationsGranted();
+            runOnUiThread(MainActivity.this::requestOrShowTestNotification);
+            return granted ? "shown" : "permission-requested";
+        }
+
+        @JavascriptInterface
+        public String getNotificationPermissionState() {
+            if (notificationsGranted()) return "granted";
+            if (Build.VERSION.SDK_INT >= 33 && shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
+                return "denied";
+            }
+            return "prompt";
+        }
+
         @JavascriptInterface
         public void saveFile(String name, String mimeType, String base64Data) {
             runOnUiThread(() -> {
