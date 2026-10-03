@@ -51,6 +51,9 @@ public class MainActivity extends Activity {
         FrameLayout root = new FrameLayout(this);
         webView = new WebView(this);
         webView.setBackgroundColor(Color.rgb(7, 16, 11));
+        webView.setHorizontalScrollBarEnabled(false);
+        webView.setVerticalScrollBarEnabled(true);
+        webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
         root.addView(webView, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
@@ -82,7 +85,7 @@ public class MainActivity extends Activity {
         settings.setMediaPlaybackRequiresUserGesture(true);
         settings.setSupportMultipleWindows(true);
         settings.setJavaScriptCanOpenWindowsAutomatically(false);
-        settings.setUserAgentString(settings.getUserAgentString() + " DeadlineAtlasAndroid/1.2");
+        settings.setUserAgentString(settings.getUserAgentString() + " DeadlineAtlasAndroid/1.3");
 
         CookieManager.getInstance().setAcceptCookie(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
